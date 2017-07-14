@@ -17,9 +17,9 @@ import java.util.List;
  */
 public class MonthEntry {
 
-    private int year;
-    private int month;
-    private List<EmailEntry> emails = new ArrayList<>();
+    private final int year;
+    private final int month;
+    private final List<EmailEntry> emails = new ArrayList<>();
 
     public MonthEntry(Date date) {
         Calendar cal = Calendar.getInstance();
@@ -34,6 +34,10 @@ public class MonthEntry {
 
     public int getMonth() {
         return month;
+    }
+
+    public List<EmailEntry> getEmails() {
+        return emails;
     }
 
     public MonthEntry addEmails(Collection<EmailEntry> emails) {

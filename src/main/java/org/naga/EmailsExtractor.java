@@ -5,16 +5,16 @@
  */
 package org.naga;
 
+import org.naga.util.ContentHelper;
+import org.naga.util.MyUtil;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.naga.modals.EmailEntry;
 import org.naga.modals.MonthEntry;
+import org.naga.modals.ResultSet;
 
 /**
  *
@@ -22,30 +22,29 @@ import org.naga.modals.MonthEntry;
  */
 public class EmailsExtractor {
 
-    private final String url;
-    private Document document;
-    private final char URL_PATH_SEPERATOR = '/';
+    private final String baseUrl;
 
-    public EmailsExtractor(String url) {
-        this.url = url;
+    private final ContentHelper contentHelper;
+
+    public EmailsExtractor(String baseUrl, ContentHelper contentHelper) {
+        this.baseUrl = baseUrl;
+        this.contentHelper = contentHelper;
     }
 
     public String getUrl() {
-        return url;
+        return baseUrl;
     }
 
-    public List<MonthEntry> extractForYear(int year) throws IOException {
-        List<MonthEntry> entries = new ArrayList<>();
-        if (document == null) {
-            document = Jsoup.connect(url).get();
+    public ResultSet extractForYear(int year) throws IOException {
+        ResultSet results = new ResultSet(year);
+        Element table = contentHelper.extractYearTable(baseUrl, year);
+        if (table != null) {
+            Elements rows = table.select("tbody tr");
+            for (Element row : rows) {
+                results.addEntry(extractMonth(row));
+            }
         }
-        Element table = document.getElementsMatchingOwnText("Year " + year).parents().select(".year").first();
-        Elements rows = table.select("tbody tr");
-        for (Element row : rows) {
-            entries.add(extractMonth(row));
-        }
-
-        return entries;
+        return results;
     }
 
     /**
@@ -54,13 +53,28 @@ public class EmailsExtractor {
      * @param monthRow
      * @return
      */
-    private MonthEntry extractMonth(Element monthRow) throws IOException {
+    private MonthEntry extractMonth(Element monthRow) {
         String date = monthRow.select(".date").text();
         String link = monthRow.select("a[href]").first().attr("href");
-        MonthEntry entry = new MonthEntry(MyUtill.parseDate(date));
-        //System.out.println(entry + " : " + url + URL_PATH_SEPERATOR + link);
+        MonthEntry entry = new MonthEntry(MyUtil.parseDate(date));
         entry.addEmails(extractEmails(link));
         return entry;
+    }
+
+    /**
+     * checks whether the given table has next batch or not
+     *
+     * @param table
+     * @return true if there is a next batch false otherwise
+     */
+    private boolean hasNextBatch(Element table) {
+        Elements elements = table.select("thead");
+        if (elements != null & elements.size() > 0) {
+            Element thead = elements.first();
+            Elements nextElements = thead.getElementsContainingText("Next ");
+            return nextElements != null && nextElements.size() > 0;
+        }
+        return false;
     }
 
     /**
@@ -69,28 +83,38 @@ public class EmailsExtractor {
      * @param msgListTable
      * @return
      */
-    private List<EmailEntry> extractEmails(String path) throws IOException {
+    private List<EmailEntry> extractEmails(String path) {
         List<EmailEntry> emails = new ArrayList<>();
-        Document monthDocument = Jsoup.connect(url + URL_PATH_SEPERATOR + path).get();
-        if (monthDocument != null) {
-            Element msgListTable = monthDocument.select("#msglist").first();
-            Elements rows = msgListTable.select("tbody tr");
-            for (Element row : rows) {
-                //System.out.println("row = " + row.text());
-                if (row.select("a").size() > 0) {
-                    emails.add(parseEmailEntry(row));
+        boolean hasNext;
+        String url = baseUrl + MyUtil.URL_PATH_SEPERATOR + path;
+        String msgBoxUrl = url.substring(0, url.lastIndexOf(MyUtil.URL_PATH_SEPERATOR) + 1);
+        int index = 0;
+        // iterating over the batches
+        do {
+            Element table = contentHelper.extractEmailsTable(url + "?" + index);
+            if (table != null) {
+                Elements rows = table.select("tbody tr");
+                for (Element row : rows) {
+                    // shoudl be a valid email entry
+                    if (row.select("a").size() > 0) {
+                        emails.add(parseEmailEntry(msgBoxUrl, row));
+                    }
                 }
-
+                hasNext = hasNextBatch(table);
+                index++;
+            } else {
+                hasNext = false;
             }
-        }
+        } while (hasNext);
 
         return emails;
     }
 
-    private EmailEntry parseEmailEntry(Element row) {
+    private EmailEntry parseEmailEntry(String url, Element row) {
         String author = row.select(".author").text();
         String subject = row.select(".subject").text();
         String date = row.select(".date").text();
-        return new EmailEntry(author, subject, MyUtill.parseDate2(date));
+        String link = row.select(".subject a[href]").first().attr("href");
+        return new EmailEntry(author, subject, url + link, MyUtil.parseDateWithTime(date));
     }
 }

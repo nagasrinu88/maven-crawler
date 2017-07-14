@@ -6,6 +6,7 @@
 package org.naga.modals;
 
 import java.util.Date;
+import org.naga.util.ContentHelper;
 
 /**
  *
@@ -15,11 +16,14 @@ public class EmailEntry {
 
     private final String author;
     private final String subject;
+    private final String link;
     private final Date date;
+    private String content;
 
-    public EmailEntry(String author, String subject, Date date) {
+    public EmailEntry(String author, String subject, String link, Date date) {
         this.author = author;
         this.subject = subject;
+        this.link = link;
         this.date = date;
     }
 
@@ -31,8 +35,27 @@ public class EmailEntry {
         return subject;
     }
 
+    public String getLink() {
+        return link;
+    }
+
     public Date getDate() {
         return date;
+    }
+
+    /**
+     * Will load the actual email content by using contentHelper. if the content
+     * is already loaded by some previous activity then it will return it with
+     * out reloading it
+     *
+     * @param contentHelper
+     * @return
+     */
+    public String loadEmailBody(ContentHelper contentHelper) {
+        if (content == null) {
+            content = contentHelper.extractEmailContents(link);
+        }
+        return content;
     }
 
     @Override
