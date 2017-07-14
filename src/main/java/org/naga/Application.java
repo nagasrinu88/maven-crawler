@@ -10,6 +10,7 @@ import org.naga.util.ContentHelperImpl;
 import java.io.IOException;
 import org.naga.modals.MonthEntry;
 import org.naga.modals.ResultSet;
+import org.naga.util.ContentWriter;
 
 /**
  *
@@ -22,12 +23,13 @@ public class Application {
 
         ContentHelper contentHelper = new ContentHelperImpl();
         EmailsExtractor extractor = new EmailsExtractor(URL, contentHelper);
-        ResultSet results = extractor.extractForYear(2015);
+        ResultSet results = extractor.extractForYear(2017);
 
         System.out.println(results);
         for (MonthEntry entry : results.getEntries()) {
             //System.out.println(entry.getEmails().get(10).loadEmailBody(contentHelper));
             System.out.println(entry);
+            new ContentWriter().writeEmail(entry.getEmails().get(0));
         }
     }
 }
