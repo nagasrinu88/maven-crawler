@@ -26,7 +26,8 @@ public class Application {
 
         System.out.println(results);
         for (MonthEntry entry : results.getEntries()) {
-            System.out.println(entry.getEmails().get(10).loadEmailBody(contentHelper));
+            //System.out.println(entry.getEmails().get(10).loadEmailBody(contentHelper));
+            System.out.println(entry);
         }
     }
 }
