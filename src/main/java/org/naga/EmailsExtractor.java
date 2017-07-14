@@ -44,7 +44,7 @@ public class EmailsExtractor {
         for (Element row : rows) {
             entries.add(extractMonth(row));
         }
-        
+
         return entries;
     }
 
@@ -77,7 +77,10 @@ public class EmailsExtractor {
             Elements rows = msgListTable.select("tbody tr");
             for (Element row : rows) {
                 //System.out.println("row = " + row.text());
-                emails.add(parseEmailEntry(row));
+                if (row.select("a").size() > 0) {
+                    emails.add(parseEmailEntry(row));
+                }
+
             }
         }
 
