@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.naga.modals.EmailEntry;
-import org.naga.modals.ResultSet;
+import org.naga.models.EmailEntry;
+import org.naga.models.ResultSet;
 import org.naga.util.ContentWriteListener;
 import org.naga.util.ContentWriter;
 

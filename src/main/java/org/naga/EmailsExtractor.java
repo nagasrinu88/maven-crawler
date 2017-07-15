@@ -13,9 +13,9 @@ import java.util.Date;
 import java.util.List;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.naga.modals.EmailEntry;
-import org.naga.modals.MonthEntry;
-import org.naga.modals.ResultSet;
+import org.naga.models.EmailEntry;
+import org.naga.models.MonthEntry;
+import org.naga.models.ResultSet;
 
 /**
  *
