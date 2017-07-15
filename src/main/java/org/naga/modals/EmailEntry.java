@@ -14,17 +14,23 @@ import org.naga.util.ContentHelper;
  */
 public class EmailEntry {
 
+    private final int index;
     private final String author;
     private final String subject;
     private final String link;
     private final Date date;
     private String content;
 
-    public EmailEntry(String author, String subject, String link, Date date) {
+    public EmailEntry(int index, String author, String subject, String link, Date date) {
+        this.index = index;
         this.author = author;
         this.subject = subject;
         this.link = link;
         this.date = date;
+    }
+
+    public int getIndex() {
+        return index;
     }
 
     public String getAuthor() {

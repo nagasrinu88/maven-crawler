@@ -7,6 +7,8 @@ package org.naga.modals;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  *
@@ -31,6 +33,14 @@ public class ResultSet {
 
     public void addEntry(MonthEntry entry) {
         entries.add(entry);
+    }
+
+    public Queue buildQueue() {
+        Queue<EmailEntry> queue = new ConcurrentLinkedQueue();
+        for (MonthEntry entry : entries) {
+            queue.addAll(entry.getEmails());
+        }
+        return queue;
     }
 
     @Override

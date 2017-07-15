@@ -9,6 +9,7 @@ import org.naga.util.ContentHelper;
 import org.naga.util.MyUtil;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -57,7 +58,7 @@ public class EmailsExtractor {
         String date = monthRow.select(".date").text();
         String link = monthRow.select("a[href]").first().attr("href");
         MonthEntry entry = new MonthEntry(MyUtil.parseDate(date));
-        entry.addEmails(extractEmails(link));
+        entry.addEmails(extractEmails(entry.getYear(), link));
         return entry;
     }
 
@@ -83,25 +84,26 @@ public class EmailsExtractor {
      * @param msgListTable
      * @return
      */
-    private List<EmailEntry> extractEmails(String path) {
+    private List<EmailEntry> extractEmails(int year, String path) {
         List<EmailEntry> emails = new ArrayList<>();
         boolean hasNext;
         String url = baseUrl + MyUtil.URL_PATH_SEPERATOR + path;
         String msgBoxUrl = url.substring(0, url.lastIndexOf(MyUtil.URL_PATH_SEPERATOR) + 1);
-        int index = 0;
+        int pageIndex = 0;
+        int emailIndex = 0;
         // iterating over the batches
         do {
-            Element table = contentHelper.extractEmailsTable(url + "?" + index);
+            Element table = contentHelper.extractEmailsTable(url + "?" + pageIndex);
             if (table != null) {
                 Elements rows = table.select("tbody tr");
                 for (Element row : rows) {
                     // shoudl be a valid email entry
                     if (row.select("a").size() > 0) {
-                        emails.add(parseEmailEntry(msgBoxUrl, row));
+                        emails.add(parseEmailEntry(year, emailIndex++, msgBoxUrl, row));
                     }
                 }
                 hasNext = hasNextBatch(table);
-                index++;
+                pageIndex++;
             } else {
                 hasNext = false;
             }
@@ -110,11 +112,11 @@ public class EmailsExtractor {
         return emails;
     }
 
-    private EmailEntry parseEmailEntry(String url, Element row) {
+    private EmailEntry parseEmailEntry(int year, int index, String url, Element row) {
         String author = row.select(".author").text();
         String subject = row.select(".subject").text();
-        String date = row.select(".date").text();
+        Date date = MyUtil.parseDateWithTime(row.select(".date").text());
         String link = row.select(".subject a[href]").first().attr("href");
-        return new EmailEntry(author, subject, url + link, MyUtil.parseDateWithTime(date));
+        return new EmailEntry(index, author, subject, url + link, MyUtil.modifyYear(date, year));
     }
 }

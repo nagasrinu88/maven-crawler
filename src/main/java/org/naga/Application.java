@@ -8,28 +8,63 @@ package org.naga;
 import org.naga.util.ContentHelper;
 import org.naga.util.ContentHelperImpl;
 import java.io.IOException;
-import org.naga.modals.MonthEntry;
+import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.naga.modals.EmailEntry;
 import org.naga.modals.ResultSet;
+import org.naga.util.ContentWriteListener;
 import org.naga.util.ContentWriter;
 
 /**
  *
  * @author Owner
  */
-public class Application {
+public class Application
+        implements ContentWriteListener {
+
+    private static final int DEFAULT_POOL_SIZE = 10;
+    private static final String DEFAULT_FOLDER = "maven-emails";
+
+    private int completed;
+    private String URL = "http://mail-archives.apache.org/mod_mbox/maven-users";
+    private final ContentHelper contentHelper = new ContentHelperImpl();
+    private int totalEmails;
+    private String folder;
+    private int poolSize;
+
+    public Application() {
+        this(DEFAULT_POOL_SIZE, DEFAULT_FOLDER);
+    }
+
+    public Application(int poolSize, String folder) {
+        this.poolSize = poolSize;
+        this.folder = folder;
+    }
+
+    @Override
+    public synchronized void completed() {
+        completed++;
+        // printing batch wise to improve the performance
+        if (completed % 100 == 0 || completed == totalEmails) {
+            System.out.println("Fetched " + completed + " out of " + totalEmails + " Emails");
+        }
+    }
+
+    public void fetch(int year) throws IOException {
+        EmailsExtractor extractor = new EmailsExtractor(URL, contentHelper);
+        ResultSet results = extractor.extractForYear(year);
+
+        ExecutorService executor = Executors.newFixedThreadPool(poolSize);
+        Queue<EmailEntry> queue = results.buildQueue();
+        totalEmails = queue.size();
+        while (!queue.isEmpty()) {
+            executor.execute(new ContentWriter(folder, queue.poll(), contentHelper, this));
+        }
+        executor.shutdown();
+    }
 
     public static void main(String[] args) throws IOException {
-        String URL = "http://mail-archives.apache.org/mod_mbox/maven-users";
-
-        ContentHelper contentHelper = new ContentHelperImpl();
-        EmailsExtractor extractor = new EmailsExtractor(URL, contentHelper);
-        ResultSet results = extractor.extractForYear(2017);
-
-        System.out.println(results);
-        for (MonthEntry entry : results.getEntries()) {
-            //System.out.println(entry.getEmails().get(10).loadEmailBody(contentHelper));
-            System.out.println(entry);
-            new ContentWriter().writeEmail(entry.getEmails().get(0));
-        }
+        new Application().fetch(2017);
     }
 }

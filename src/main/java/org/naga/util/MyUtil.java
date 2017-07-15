@@ -8,6 +8,7 @@ package org.naga.util;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -66,6 +67,25 @@ public class MyUtil {
      */
     public static Date parseDateWithTime(String date) {
         return parseDate(DF2, date);
+    }
+
+    public static int extractMonth(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        return cal.get(Calendar.MONTH);
+    }
+
+    public static int extractYear(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        return cal.get(Calendar.YEAR);
+    }
+
+    public static Date modifyYear(Date date, int year) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(Calendar.YEAR, year);
+        return cal.getTime();
     }
 
 }
