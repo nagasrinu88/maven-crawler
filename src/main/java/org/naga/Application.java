@@ -65,6 +65,7 @@ public class Application
     }
 
     public static void main(String[] args) throws IOException {
-        new Application().fetch(2017);
+        int year = 2015; // you can change teh year value
+        new Application().fetch(year);
     }
 }
